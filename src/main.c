@@ -14,6 +14,8 @@
 #define ARENA_IMPLEMENTATION
 #include "external/arena.h"
 
+#include "resources/font.h"
+
 #include "explode.h"
 #include "gif_load.h"
 #include "util/string.h"
@@ -28,17 +30,23 @@ Image load_image(const char* filename)
     return image;
 }
 
-void draw_text_centered(const char* text, int font_size, int y)
+void draw_text_centered(Font font, const char* text, int font_size, int y)
 {
-    const int font_height = font_size;
-    const int font_width = MeasureText(text, font_height);
+    const int font_spacing = 2;
 
-    DrawText(text,
-             GetScreenWidth() / 2.f - font_width / 2.f,
-             y == 0
-                 ? GetScreenHeight() / 2.f - font_height / 2.f
-                 : y,
-             font_height, WHITE);
+    const Vector2 font_dims = MeasureTextEx(font, text, font_size, font_spacing);
+
+    DrawTextEx(font,
+               text,
+               (Vector2) {
+                   .x = GetScreenWidth() / 2.f - font_dims.x / 2.f,
+                   .y = y == 0
+                       ? GetScreenHeight() / 2.f - font_dims.y / 2.f
+                       : y,
+               },
+               font_size,
+               font_spacing,
+               WHITE);
 }
 
 typedef struct {
@@ -94,6 +102,8 @@ int main(void)
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Explode Generator");
 
+    Font font = LoadFontFromMemory(".ttf", font_ttf_bytes, sizeof(font_ttf_bytes), 40, NULL, 0);
+
     Textures animation_frames = { 0 };
 
     char* animation_path = NULL;
@@ -111,7 +121,7 @@ int main(void)
             // Draw loading text
             BeginDrawing();
             ClearBackground(GetColor(0x181818FF));
-            draw_text_centered("Loading...", 40, 0);
+            draw_text_centered(font, "Loading...", 40, 0);
             EndDrawing();
 
             // Load and generate image etc
@@ -149,10 +159,10 @@ int main(void)
             const int text_small_size = text_big_size * 0.5;
 
             // Draw text
-            draw_text_centered("Image generated!", text_big_size, text_padding);
-            draw_text_centered(TextFormat("Image path: %s", animation_path), text_small_size,
+            draw_text_centered(font, "Image generated!", text_big_size, text_padding);
+            draw_text_centered(font, TextFormat("Image path: %s", animation_path), text_small_size,
                                text_padding + text_big_size + 3);
-            draw_text_centered("Drag & Drop to generate a new image!", text_medium_size,
+            draw_text_centered(font, "Drag & Drop to generate a new image!", text_medium_size,
                                GetScreenHeight() - text_padding - text_medium_size);
 
             // Get animation frame
@@ -194,7 +204,7 @@ int main(void)
                            0.0f, WHITE);
 
         } else {
-            draw_text_centered("Drag & Drop some image!", 40, 0);
+            draw_text_centered(font, "Drag & Drop some image!", 40, 0);
         }
 
         EndDrawing();
