@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <libgen.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -95,7 +96,7 @@ int main(void)
 
     Textures animation_frames = { 0 };
 
-    const char* animation_path = NULL;
+    char* animation_path = NULL;
 
     double gif_animation_duration = 0;
     double gif_animation_start = 0;
@@ -128,7 +129,7 @@ int main(void)
             textures_destroy(animation_frames);
 
             animation_frames = textures_from_gif(output_path);
-            animation_path = output_path;
+            animation_path = basename((char*)output_path);
             gif_animation_start = GetTime();
             gif_animation_duration = animation_frames.count * 1.f / 25.f;
         }
@@ -143,13 +144,16 @@ int main(void)
 
         if (animation_frames.count != 0) {
             const int text_padding = 10;
+            const int text_big_size = GetScreenWidth() * 0.05;
+            const int text_medium_size = text_big_size * 0.75;
+            const int text_small_size = text_big_size * 0.5;
 
             // Draw text
-            draw_text_centered("Image generated!", 40, text_padding);
-            draw_text_centered(TextFormat("Image path: %s", animation_path), 20,
-                               text_padding + 40 + 3);
-            draw_text_centered("Drag & Drop to generate a new image!", 30,
-                               GetScreenHeight() - text_padding - 30);
+            draw_text_centered("Image generated!", text_big_size, text_padding);
+            draw_text_centered(TextFormat("Image path: %s", animation_path), text_small_size,
+                               text_padding + text_big_size + 3);
+            draw_text_centered("Drag & Drop to generate a new image!", text_medium_size,
+                               GetScreenHeight() - text_padding - text_medium_size);
 
             // Get animation frame
             float gif_animation_factor = (GetTime() - gif_animation_start) / gif_animation_duration;
