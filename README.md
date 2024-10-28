@@ -13,4 +13,4 @@ $ meson compile -C build
 $ ./build/src/explode-generator
 ```
 
-This will generate the animation at `./neocat_floof_explode.png` as an animated PNG, and then show it on the application's window.
+Drag and drop a file into the application's window and see the magic happen!
