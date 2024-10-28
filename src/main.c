@@ -131,7 +131,7 @@ int main(void)
             Image exploding_image = load_image(input_path);
             if (exploding_image.data == NULL) {
                 fprintf(stderr, "ERROR: failed to load file `%s`: %s\n", input_path, strerror(errno));
-                return 1;
+                goto continue_after_dropped_files;
             }
             image_to_explode_gif(exploding_image, output_path);
             UnloadImage(exploding_image);
@@ -143,6 +143,7 @@ int main(void)
             gif_animation_start = GetTime();
             gif_animation_duration = animation_frames.count * 1.f / 25.f;
         }
+    continue_after_dropped_files:
         UnloadDroppedFiles(dropped_files);
 
         /*          *
