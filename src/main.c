@@ -27,6 +27,26 @@
 #define BUTTON_HIGHLIGHT_COLOR ColorBrightness(BUTTON_COLOR, .1f)
 #define BUTTON_PRESSED_COLOR ColorBrightness(BUTTON_HIGHLIGHT_COLOR, .1f)
 
+#define MIN_FONT_SIZE 8
+#define MAX_FONT_SIZE 80
+#define FONT_ARRAY_SIZE (MAX_FONT_SIZE - MIN_FONT_SIZE + 1)
+Font fonts[FONT_ARRAY_SIZE] = { 0 };
+
+void fonts_load()
+{
+    for (size_t i = 0; i < FONT_ARRAY_SIZE; ++i) {
+        size_t font_size = MIN_FONT_SIZE + i;
+        fonts[i] = LoadFontFromMemory(".ttf", font_ttf_bytes, sizeof(font_ttf_bytes), font_size, NULL, 0);
+    }
+}
+
+void fonts_unload()
+{
+    for (size_t i = 0; i < FONT_ARRAY_SIZE; ++i) {
+        UnloadFont(fonts[i]);
+    }
+}
+
 Image load_image(const char* filename)
 {
     Image image;
@@ -37,8 +57,10 @@ Image load_image(const char* filename)
     return image;
 }
 
-void draw_text_centered_area(Font font, const char* text, int font_size, int y, Rectangle area)
+void draw_text_centered_area(const char* text, int font_size, int y, Rectangle area)
 {
+    const Font font = fonts[(size_t)(Clamp(font_size, MIN_FONT_SIZE, MAX_FONT_SIZE) - MIN_FONT_SIZE)];
+
     const int font_spacing = 2;
 
     const Vector2 font_dims = MeasureTextEx(font, text, font_size, font_spacing);
@@ -56,14 +78,14 @@ void draw_text_centered_area(Font font, const char* text, int font_size, int y, 
                WHITE);
 }
 
-void draw_text_centered(Font font, const char* text, int font_size, int y)
+void draw_text_centered(const char* text, int font_size, int y)
 {
-    draw_text_centered_area(font, text, font_size, y, (Rectangle) {
-                                                          .x = 0,
-                                                          .y = 0,
-                                                          .width = GetScreenWidth(),
-                                                          .height = GetScreenHeight(),
-                                                      });
+    draw_text_centered_area(text, font_size, y, (Rectangle) {
+                                                    .x = 0,
+                                                    .y = 0,
+                                                    .width = GetScreenWidth(),
+                                                    .height = GetScreenHeight(),
+                                                });
 }
 
 typedef struct {
@@ -115,7 +137,7 @@ void textures_destroy(Textures textures)
 }
 
 int selector(const char* options[], size_t options_count, size_t option_selected,
-             Font font, const char* title, Rectangle area)
+             const char* title, Rectangle area)
 {
     int clicked_option = -1;
 
@@ -125,7 +147,7 @@ int selector(const char* options[], size_t options_count, size_t option_selected
     const int title_font_size = 40;
 
     const float title_y = area.y + padding;
-    draw_text_centered_area(font, title, title_font_size, title_y, area);
+    draw_text_centered_area(title, title_font_size, title_y, area);
 
     const float button_height = 20;
     float button_y = title_y + title_font_size + padding;
@@ -150,7 +172,7 @@ int selector(const char* options[], size_t options_count, size_t option_selected
         button_y += button_height + padding;
 
         const float button_label_size = title_font_size * 0.4;
-        draw_text_centered_area(font, button_label, button_label_size,
+        draw_text_centered_area(button_label, button_label_size,
                                 button_area.y + button_height / 2.f - button_label_size / 2.f,
                                 button_area);
 
@@ -179,11 +201,11 @@ int main(void)
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Explode Generator");
 
+    fonts_load();
+
     bool emoji_customized = false;
     EmojiFormat emoji_format = EMOJI_FORMAT_PNG;
     EmojiKind emoji_kind = EMOJI_KIND_EXPLODE;
-
-    Font font = LoadFontFromMemory(".ttf", font_ttf_bytes, sizeof(font_ttf_bytes), 40, NULL, 0);
 
     Textures animation_frames = { 0 };
 
@@ -202,7 +224,7 @@ int main(void)
         const int text_small_size = text_big_size * 0.5;
 
         if (!emoji_customized) {
-            draw_text_centered(font, "Customize your emoji!", text_big_size, 10);
+            draw_text_centered("Customize your emoji!", text_big_size, 10);
 
             const float padding = 10;
             const float selector_height = 150;
@@ -230,14 +252,14 @@ int main(void)
             // Selector for emoji format
             int selected_format
                 = selector((const char*[]) { "GIF", "Animated PNG" }, COUNT_EMOJI_FORMATS,
-                           emoji_format, font, "Emoji format:", format_selector_area);
+                           emoji_format, "Emoji format:", format_selector_area);
             if (selected_format != -1)
                 emoji_format = selected_format;
 
             // Selector for emoji kind
             int selected_kind
                 = selector((const char*[]) { "Explode", "Implode" }, COUNT_EMOJI_KINDS,
-                           emoji_kind, font, "Emoji kind:", kind_selector_area);
+                           emoji_kind, "Emoji kind:", kind_selector_area);
             if (selected_kind != -1)
                 emoji_kind = selected_kind;
 
@@ -255,12 +277,12 @@ int main(void)
 
                 Color done_button_color = CheckCollisionPointRec(GetMousePosition(), done_button_area)
                     ? (IsMouseButtonDown(MOUSE_BUTTON_LEFT)
-                       ? BUTTON_PRESSED_COLOR
-                       : BUTTON_HIGHLIGHT_COLOR)
+                           ? BUTTON_PRESSED_COLOR
+                           : BUTTON_HIGHLIGHT_COLOR)
                     : BUTTON_COLOR;
                 DrawRectangleRounded(done_button_area, 0.4, 10, done_button_color);
 
-                draw_text_centered_area(font, "Done!", 20, 0, done_button_area);
+                draw_text_centered_area("Done!", 20, 0, done_button_area);
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)
                     && CheckCollisionPointRec(GetMousePosition(), done_button_area))
@@ -278,7 +300,7 @@ int main(void)
         FilePathList dropped_files = LoadDroppedFiles();
         if (dropped_files.count > 0) {
             // Draw loading text
-            draw_text_centered(font, "Loading...", 40, 0);
+            draw_text_centered("Loading...", 40, 0);
             EndDrawing();
             BeginDrawing();
 
@@ -338,10 +360,10 @@ int main(void)
 
         if (animation_frames.count != 0) {
             // Draw text
-            draw_text_centered(font, "Image generated!", text_big_size, text_padding);
-            draw_text_centered(font, TextFormat("Image path: %s", animation_path), text_small_size,
+            draw_text_centered("Image generated!", text_big_size, text_padding);
+            draw_text_centered(TextFormat("Image path: %s", animation_path), text_small_size,
                                text_padding + text_big_size + 3);
-            draw_text_centered(font, "Drag & Drop to generate a new image!", text_medium_size,
+            draw_text_centered("Drag & Drop to generate a new image!", text_medium_size,
                                GetScreenHeight() - text_padding - text_medium_size);
 
             // Get animation frame
@@ -383,13 +405,15 @@ int main(void)
                            0.0f, WHITE);
 
         } else {
-            draw_text_centered(font, "Drag & Drop some image!", 40, 0);
+            draw_text_centered("Drag & Drop some image!", 40, 0);
         }
 
         EndDrawing();
     }
 
     textures_destroy(animation_frames);
+
+    fonts_unload();
 
     CloseWindow();
 
