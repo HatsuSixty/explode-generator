@@ -76,7 +76,7 @@ void image_explode(Image* image, float level)
     free(original_data);
 }
 
-void image_to_explode_gif(Image image, const char* output)
+void image_to_explode_gif(Image image, const char* output, bool reverse)
 {
     Arena arena = { 0 };
 
@@ -165,7 +165,7 @@ void image_to_explode_gif(Image image, const char* output)
         .height = image.height,
     };
 
-    gif_save(gif_frames, output);
+    gif_save(gif_frames, output, reverse);
 
     arena_free(&arena);
 }

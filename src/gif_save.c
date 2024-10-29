@@ -7,7 +7,7 @@
 
 #include <MagickWand/MagickWand.h>
 
-bool gif_save(GifFrames frames, const char* output_file)
+bool gif_save(GifFrames frames, const char* output_file, bool reverse)
 {
     if (string_ends_with(output_file, ".apng") || string_ends_with(output_file, ".png")) {
         output_file = string_append_prefix(output_file, "APNG:");
@@ -42,7 +42,10 @@ bool gif_save(GifFrames frames, const char* output_file)
         }
 
         MagickAddImage(wand, frame_wand);
-        MagickSetLastIterator(wand);
+        if (reverse)
+            MagickSetIteratorIndex(wand, 0);
+        else
+            MagickSetLastIterator(wand);
 
         frame_wand = DestroyMagickWand(frame_wand);
     }

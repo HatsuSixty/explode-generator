@@ -10,4 +10,4 @@ typedef struct {
     int height;
 } GifFrames;
 
-bool gif_save(GifFrames frames, const char* output_file);
+bool gif_save(GifFrames frames, const char* output_file, bool reverse);

@@ -11,4 +11,4 @@ executable('explode-generator', [
   dependency('raylib'),
   dependency('MagickWand'),
   cc.find_library('m'),
-])
+], install : true)
