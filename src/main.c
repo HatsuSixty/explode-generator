@@ -26,6 +26,8 @@
 #define BUTTON_COLOR ColorBrightness(HIGHLIGHTED_BACKGROUND_COLOR, .1f)
 #define BUTTON_HIGHLIGHT_COLOR ColorBrightness(BUTTON_COLOR, .1f)
 #define BUTTON_PRESSED_COLOR ColorBrightness(BUTTON_HIGHLIGHT_COLOR, .1f)
+#define BUTTON_SELECTED_INDICATOR_NORMAL_COLOR ColorBrightness(BUTTON_PRESSED_COLOR, .3f)
+#define BUTTON_SELECTED_INDICATOR_SELECTED_COLOR WHITE
 
 #define MIN_FONT_SIZE 8
 #define MAX_FONT_SIZE 80
@@ -153,10 +155,8 @@ int selector(const char* options[], size_t options_count, size_t option_selected
     float button_y = title_y + title_font_size + padding;
     for (size_t i = 0; i < options_count; ++i) {
         const char* button_label = options[i];
-        if (i == option_selected) {
-            button_label = string_append_prefix(" (selected)", options[i]);
-        }
 
+        // Draw the actual button background
         Rectangle button_area = (Rectangle) {
             .x = area.x + padding,
             .y = button_y,
@@ -171,11 +171,32 @@ int selector(const char* options[], size_t options_count, size_t option_selected
         DrawRectangleRounded(button_area, 0.4, 10, button_color);
         button_y += button_height + padding;
 
-        const float button_label_size = title_font_size * 0.4;
-        draw_text_centered_area(button_label, button_label_size,
-                                button_area.y + button_height / 2.f - button_label_size / 2.f,
-                                button_area);
+        // Draw "selected" indicator
+        const float selected_circle_radius = button_height / 2.f - 4;
+        const float selected_circle_padding = 4.f;
 
+        Color selected_circle_color = BUTTON_SELECTED_INDICATOR_NORMAL_COLOR;
+        if (i == option_selected) {
+            selected_circle_color = BUTTON_SELECTED_INDICATOR_SELECTED_COLOR;
+        }
+
+        DrawCircle(button_area.x + selected_circle_padding + selected_circle_radius,
+                   button_area.y + button_height / 2.f,
+                   selected_circle_radius, selected_circle_color);
+
+        // Draw the button label
+        Rectangle button_label_area = button_area;
+        button_label_area.x
+            += selected_circle_padding + selected_circle_radius + selected_circle_radius;
+        button_label_area.width
+            -= selected_circle_padding + selected_circle_radius + selected_circle_radius;
+        const float button_label_size = title_font_size * 0.4;
+
+        draw_text_centered_area(button_label, button_label_size,
+                                button_label_area.y + button_height / 2.f - button_label_size / 2.f,
+                                button_label_area);
+
+        // Check for click
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)
             && CheckCollisionPointRec(GetMousePosition(), button_area))
             clicked_option = i;
