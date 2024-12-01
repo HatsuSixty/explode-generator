@@ -21,6 +21,7 @@ bool gif_save(GifFrames frames, const char* output_file, bool reverse)
     for (size_t i = 0; i < frames.frames_count; ++i) {
         MagickWand* frame_wand = NewMagickWand();
         MagickSetSize(frame_wand, frames.width, frames.height);
+        MagickSetImageAlphaChannel(frame_wand, TransparentAlphaChannel);
         MagickReadImage(frame_wand, "xc:none");
 
         MagickBooleanType import_status = MagickImportImagePixels(frame_wand,
